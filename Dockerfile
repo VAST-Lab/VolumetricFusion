@@ -1,4 +1,7 @@
-FROM nvidia/cuda:8.0-devel
+FROM nvidia/cuda:12.5.1-devel-ubuntu22.04
+ENV TZ=US \
+    DEBIAN_FRONTEND=noninteractive
+
 ARG CUDA_GENERATION=Auto
 
 RUN apt-get update && apt-get install -y \
@@ -10,14 +13,17 @@ RUN apt-get update && apt-get install -y \
     libgoogle-glog-dev \
     libgtk2.0-dev \
     liblapack-dev \
+    libvtk9-dev \
     libproj-dev \
     libsuitesparse-dev \
-    libvtk5-dev \
+    libqt5opengl5-dev \
     pkg-config \
     zip
 
+
 # Make dynfu build dir
 RUN mkdir -p dynfu/build
+
 
 # Get terra
 ADD https://github.com/zdevito/terra/releases/download/release-2016-03-25/terra-Linux-x86_64-332a506.zip .
@@ -34,9 +40,9 @@ WORKDIR ../..
 RUN ln -s /Opt /dynfu/build/Opt
 
 # Install OpenMesh
-ADD http://www.openmesh.org/media/Releases/6.3/OpenMesh-6.3.tar.gz .
-RUN tar xzf OpenMesh-6.3.tar.gz
-WORKDIR OpenMesh-6.3
+ADD https://www.graphics.rwth-aachen.de/media/openmesh_static/Releases/11.0/OpenMesh-11.0.0.tar.gz .
+RUN tar xzf OpenMesh-11.0.0.tar.gz
+WORKDIR OpenMesh-11.0.0
 RUN mkdir build
 WORKDIR build
 RUN cmake -DCMAKE_BUILD_TYPE=Release .. && make install
@@ -46,9 +52,11 @@ WORKDIR ../..
 RUN rm -rf OpenMesh*
 
 # Install ceres-solver
-RUN git clone https://ceres-solver.googlesource.com/ceres-solver
-WORKDIR ceres-solver
-RUN cmake \
+ADD http://ceres-solver.org/ceres-solver-2.2.0.tar.gz .
+RUN tar xzf ceres-solver-2.2.0.tar.gz
+RUN mkdir ceres-bin
+WORKDIR ceres-bin
+RUN cmake ../ceres-solver-2.2.0 \
          -D BUILD_EXAMPLES=OFF \
          -D BUILD_TESTING=OFF \
          -D GFLAGS=OFF \
@@ -62,10 +70,11 @@ RUN apt-get install -y libflann-dev
 # Install boost
 RUN apt-get update && apt-get install -y libboost-all-dev
 
+
 # Install pcl
-ADD https://github.com/PointCloudLibrary/pcl/archive/pcl-1.8.1.tar.gz .
-RUN tar xzf pcl-1.8.1.tar.gz
-WORKDIR pcl-pcl-1.8.1
+ADD https://github.com/PointCloudLibrary/pcl/archive/refs/tags/pcl-1.14.0.tar.gz .
+RUN tar xzf pcl-1.14.0.tar.gz
+WORKDIR pcl-pcl-1.14.0
 RUN mkdir build
 WORKDIR build
 RUN cmake -D BUILD_keypoints=OFF \
@@ -78,22 +87,27 @@ RUN cmake -D BUILD_keypoints=OFF \
           -D BUILD_simulation=OFF \
           -D BUILD_stereo=OFF \
           -D BUILD_tools=OFF \
-    ..
+   ..
 RUN make install
 WORKDIR ../..
 RUN rm -rf pcl*
 
+# Download OpenCV_Contrib
+RUN git clone https://github.com/opencv/opencv_contrib.git
+
+
 # Install OpenCV
-ADD https://github.com/opencv/opencv/archive/3.2.0.tar.gz .
-RUN tar xzf 3.2.0.tar.gz
-RUN rm 3.2.0.tar.gz
-WORKDIR opencv-3.2.0
+ADD https://github.com/opencv/opencv/archive/refs/tags/4.11.0.tar.gz .
+RUN tar xzf 4.11.0.tar.gz
+RUN rm 4.11.0.tar.gz
+WORKDIR opencv-4.11.0
 RUN rm -rf platforms/android platforms/ios platforms/maven platforms/osx samples/*
 RUN mkdir build
 WORKDIR build
 RUN cmake -D BUILD_DOCS=OFF \
           -D BUILD_PACKAGE=OFF \
           -D BUILD_PERF_TESTS=OFF \
+          -D OPENCV_EXTRA_MODULES_PATH=/../../opencv_contrib/modules .. \
           -D BUILD_TESTS=OFF \
           -D BUILD_WITH_DEBUG_INFO=OFF \
           -D BUILD_opencv_apps=OFF \
@@ -111,19 +125,22 @@ RUN cmake -D BUILD_DOCS=OFF \
           -D BUILD_opencv_stitching=OFF \
           -D BUILD_opencv_superres=OFF \
           -D BUILD_opencv_ts=OFF \
+          -D BUILD_opencv_viz=ON \
           -D BUILD_opencv_video=OFF \
           -D BUILD_opencv_videoio=OFF \
           -D BUILD_opencv_videostab=OFF \
-          -D BUILD_opencv_viz=ON \
           -D BUILD_opencv_video=OFF \
           -D CMAKE_BUILD_TYPE=RELEASE \
           -D CUDA_GENERATION=${CUDA_GENERATION:-Auto} \
           -D WITH_VTK=ON \
     ..
+#    
+#
 RUN make
 RUN make install
 WORKDIR ../..
-RUN rm -rf opencv-3.2.0
+RUN rm -rf opencv-4.11.0
+RUN rm -rf opencv_contrib
 
 # Add source files
 ADD CMakeLists.txt /dynfu

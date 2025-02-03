@@ -46,7 +46,7 @@ SET(CMAKE_CONFIGURATION_TYPES "Debug;Release")
 FILE(MAKE_DIRECTORY "files")
 
 # Set CXX to compile with C++11 standard
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -MP -MD -pthread -fpermissive")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -MP -MD -pthread -fpermissive")
 
 if(BUILD_TESTS)
   # Add Flags for coverage report
@@ -60,7 +60,7 @@ find_package(Boost 1.36.0 REQUIRED COMPONENTS filesystem)
 find_package(CUDA REQUIRED)
 find_package(OpenCV REQUIRED COMPONENTS core viz highgui calib3d)
 find_package(OpenMesh REQUIRED)
-find_package(PCL 1.8.1 REQUIRED)
+find_package(PCL 1.14.0 REQUIRED)
 find_package(Threads REQUIRED)
 find_package(Thrust REQUIRED)
 
@@ -69,10 +69,10 @@ find_package(Thrust REQUIRED)
 # ---------------------------------------------------------------------------- #
 SET(HAVE_CUDA 1)
 LIST(APPEND CUDA_NVCC_FLAGS
-  "-gencode;arch=compute_30,code=sm_30;
-   -gencode;arch=compute_35,code=sm_35;
-   -gencode;arch=compute_50,code=sm_50;
-   -gencode;arch=compute_61,code=sm_61;
+  "-gencode;arch=compute_61,code=sm_61;
+   -gencode;arch=compute_75,code=sm_75;
+   -gencode;arch=compute_86,code=sm_86;
+   -gencode;arch=compute_89,code=sm_89;
    --ftz=true;
    --prec-div=false;
    --prec-sqrt=false;
