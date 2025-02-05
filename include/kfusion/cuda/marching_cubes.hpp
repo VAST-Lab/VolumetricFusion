@@ -7,6 +7,9 @@
 #include <kfusion/cuda/device_array.hpp>
 #include <kfusion/cuda/tsdf_volume.hpp>
 
+// Include Boost ptrs
+#include <boost/shared_ptr.hpp>
+
 /* pcl includes */
 #include <pcl/point_types.h>
 
